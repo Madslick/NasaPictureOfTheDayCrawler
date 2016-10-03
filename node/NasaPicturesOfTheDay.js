@@ -8,9 +8,7 @@ let https = require('https');
 class NasaPicturesOfTheDay {
 
 	constructor (config) {
-		this.config = Object.assign({
-			apiKey: 'DDxbM6VV2kuusHvAsCQfZKThSQ2f5Li1gcGdsHyp',
-		}, config || {});
+		this.config = Object.assign({}, config || {});
 	}
 
 	getPictureOfDayMeta (timestamp, callback) {
@@ -38,15 +36,12 @@ class NasaPicturesOfTheDay {
 					callback(null, response);
 				}
 				catch (e) {
-					console.log("GOT AN ERROR" + e);
+					console.error("GOT AN ERROR" + e);
 					callback(e, responseText);
 				}
 			});
 
-			res.on('error', function () {
-				console.log('here error');
-				callback();
-			});
+			res.on('error', callback);
 		});
 
 		request.end();
