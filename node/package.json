@@ -1,0 +1,11 @@
+{
+  "description": "get NASA POTD",
+  "contributors": [
+    {
+      "name": "alexander"
+    }
+  ],
+  "devDependencies": {
+    "async": "^2.0.1"
+  }
+}
