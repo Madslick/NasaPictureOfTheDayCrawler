@@ -7,6 +7,7 @@ const
 	async = require('async'),
 	http = require('http'),
 	url = require('url'),
+	readline = require('readline'),
 	apiKeys = [
 		'DDxbM6VV2kuusHvAsCQfZKThSQ2f5Li1gcGdsHyp',
 		// ADD MORE API KEYS HERE
@@ -21,31 +22,43 @@ const
 	dates = {},
 	MAX_SIMULTANEOUS_JOBS = interfaces.length,
 	start = Date.parse('2014-03-14'),
-	ROOT_DIR = '/vagrant/pics';
+	rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
 let
+	savePath = './pics',
 	now = Date.now(),
 	mod = 0; // rotate the API keys
 
 
-// setup timestamps (TODO use generator instead)
-do {
-	timestamps.push(now);
-	now -= DAY;
-} while (start < now);
-
-// Make this folder (TODO prompt user or get path from config)
-if ( ! fs.existsSync(ROOT_DIR) ) {
-	fs.mkdirSync(ROOT_DIR);
-}
-
-// Do the jobs
-async.eachLimit(timestamps, MAX_SIMULTANEOUS_JOBS, job, (error) => {
-	if (error) {
-		console.error('Got an error: \n' + error);
+// Prompt for save file path, and then run main
+rl.question(`Please enter a save path (default ${savePath})\n>`, answer => {
+	if ( answer ) {
+		savePath = answer;
 	}
-	console.log('DONE');
+	rl.close();
+	main();
 });
+
+
+function main () {
+	// setup timestamps (TODO use generator instead)
+	do {
+		timestamps.push(now);
+		now -= DAY;
+	} while (start < now);
+
+	// Make this folder (TODO prompt user or get path from config)
+	if ( ! fs.existsSync(savePath) ) {
+		fs.mkdirSync(savePath);
+	}
+
+	// Do the jobs
+	async.eachLimit(timestamps, MAX_SIMULTANEOUS_JOBS, job, (error) => {
+		if (error) {
+			console.error('Got an error: \n' + error);
+		}
+	});
+}
 
 
 // Call the POTD API and save the meta as JSON and any image
@@ -82,8 +95,8 @@ function job (timestamp, callback) {
 			let type = res.headers['content-type'],
 				extension = type.split('/')[1],
 				isImage = /image/i.test(type),
-				saveImagePath = path.join(ROOT_DIR, `${date}.${extension}`),
-				saveMetaPath = path.join(ROOT_DIR, `${date}.meta.json`),
+				saveImagePath = path.join(savePath, `${date}.${extension}`),
+				saveMetaPath = path.join(savePath, `${date}.meta.json`),
 				writer;
 
 			// Extra caution
@@ -100,7 +113,7 @@ function job (timestamp, callback) {
 			writer = fs.createWriteStream(saveImagePath);
 			res.pipe(writer);
 			res.on('end', () => {
-				writer.end()
+				writer.end();
 				callback();
 			});
 		});
